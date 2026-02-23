@@ -4,3 +4,5 @@
 #
 # Note: This file may be removed if you don't need to use it
 sudo -E apt-get update && sudo -E apt-get install ffmpeg libsm6 libxext6 -y
+sudo mkdir -p /project/data/nim-cache /project/data/nim-stow
+sudo chmod -R 777 /project/data/nim-cache /project/data/nim-stow

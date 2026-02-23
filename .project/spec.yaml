@@ -122,13 +122,13 @@ execution:
           icon_url: ""
     resources:
         gpu:
-            requested: 0
-        sharedMemoryMB: 1024
+            requested: 1
+        sharedMemoryMB: 16384
     secrets:
-        - variable: NVIDIA_API_KEY
-          description: NVIDIA API Key for accessing the API catalog
         - variable: TAVILY_API_KEY
           description: Tavily Search API Key
+        - variable: NGC_API_KEY
+          description: NGC_nvapi
     mounts:
         - type: project
           target: /project/
