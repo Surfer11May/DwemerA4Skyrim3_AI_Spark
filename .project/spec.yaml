@@ -122,7 +122,7 @@ execution:
           icon_url: ""
     resources:
         gpu:
-            requested: 1
+            requested: 0
         sharedMemoryMB: 16384
     secrets:
         - variable: TAVILY_API_KEY

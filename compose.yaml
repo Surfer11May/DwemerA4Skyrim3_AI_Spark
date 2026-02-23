@@ -22,7 +22,10 @@ services:
     deploy:
       resources:
         reservations:
-          devices: [{driver: nvidia, count: 1, capabilities: [gpu]}]
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 volumes:
   nim-cache:
