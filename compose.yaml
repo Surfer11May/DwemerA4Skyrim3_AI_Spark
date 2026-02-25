@@ -1,22 +1,29 @@
 services:
-  # This temporary service fixes the volume permissions automatically
+  # FIX: Automatic Permission Fixer (Critical for NIM model loading)
   init-chmod:
     image: busybox
-    command: chmod -R 777 /opt/nim/.cache
+    command: chmod -R 777 /opt/nim/.cache /var/lib/milvus /data
     volumes:
       - nim-cache:/opt/nim/.cache
+      - milvus-data:/var/lib/milvus
+      - redis-data:/data
 
-  llm-test-8b:
+  # PORT 8000: The Roleplay Engine
+  # Switch 'llama-3.1-8b' to 'llama-3.1-70b' in the image name when you are ready for the 70B test.
+  llm-main:
     image: nvcr.io/nim/meta/llama-3.1-8b-instruct-dgx-spark:1.0.0-variant
-    profiles: ["Test-Small"]
-    depends_on:
-      init-chmod:
-        condition: service_completed_successfully
+    profiles: ["Skyrim-Full-Stack"]
+    runtime: nvidia
+    depends_on: 
+      init-chmod: { condition: service_completed_successfully }
     ports:
       - "8000:8000"
     environment:
       - NGC_API_KEY=${NGC_API_KEY}
-      - NIM_GPU_MEM_FRACTION=0.1
+      - NIM_GPU_MEM_FRACTION=0.4      # FIX: Increased from 0.1 to stop the "No memory for cache blocks" error
+      - NIM_MAX_MODEL_LEN=8192        # Balanced for roleplay context length
+      - NVIDIA_VISIBLE_DEVICES=0
+      - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
       - nim-cache:/opt/nim/.cache
     deploy:
@@ -24,8 +31,32 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              device_ids: ['0']
               capabilities: [gpu]
+
+  # PORT 19530: Skyrim CHIM Memory (Vector DB)
+  milvus:
+    image: "milvusdb/milvus:v2.4.6"
+    depends_on: [init-chmod]
+    ports:
+      - "19530:19530"                  # FIX: Added port exposure for Scar laptop testing
+    environment:
+      - ETCD_USE_EMBED=true
+      - COMMON_STORAGETYPE=local
+    volumes:
+      - milvus-data:/var/lib/milvus
+    command: "milvus run standalone"
+
+  # PORT 6379: Skyrim CHIM Cache (Fast Storage)
+  redis:
+    image: "redis:7"
+    depends_on: [init-chmod]
+    ports:
+      - "6379:6379"                  # FIX: Added port exposure for Scar laptop testing
+    volumes:
+      - redis-data:/data
 
 volumes:
   nim-cache:
+  milvus-data:
+  redis-data:
