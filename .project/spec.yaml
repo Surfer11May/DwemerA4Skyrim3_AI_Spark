@@ -129,6 +129,8 @@ execution:
           description: Tavily Search API Key
         - variable: NGC_API_KEY
           description: NGC_nvapi
+        - variable: HF_TOKEN
+          description: ""
     mounts:
         - type: project
           target: /project/
