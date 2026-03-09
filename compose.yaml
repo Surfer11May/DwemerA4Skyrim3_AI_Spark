@@ -1,41 +1,128 @@
 services:
-  # Permission fix for LLM cache, Milvus data, and Redis state
   init-chmod:
     image: busybox
     command: chmod -R 777 /opt/nim/.cache /var/lib/milvus /data
-    volumes:
-      - nim-cache:/opt/nim/.cache
-      - milvus-data:/var/lib/milvus
-      - redis-data:/data
+    volumes: [nim-cache:/opt/nim/.cache, milvus-data:/var/lib/milvus, redis-data:/data]
 
-  llm-main-32b:
+  llm-standard:
     image: nvcr.io/nim/qwen/qwen3-32b-dgx-spark:1.1.0-variant
     profiles: ["Skyrim-Full-Stack"]
-    runtime: nvidia
-    shm_size: '16gb'
-    ulimits:
-      memlock: -1
-      stack: 67108864
-    depends_on: 
-      init-chmod: { condition: service_completed_successfully }
-    ports:
-      - "8000:8000"
+    ports: ["8000:8000"]
     environment:
       - NGC_API_KEY=${NGC_API_KEY}
-      - NIM_GPU_MEM_FRACTION=0.6
-      - NIM_MAX_MODEL_LEN=4096
-    volumes:
-      - nim-cache:/opt/nim/.cache
+      - NIM_GPU_MEM_FRACTION=0.45
+      - NIM_MAX_MODEL_LEN=4096 
+    volumes: ["nim-cache:/opt/nim/.cache"]
     deploy:
       resources:
         reservations:
-          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
 
-  # Milvus: The "Long-term Memory" for your Skyrim NPCs
+  llm-fast:
+    image: nvcr.io/nim/nvidia/nvidia-nemotron-nano-9b-v2-dgx-spark:1.0.0-variant
+    profiles: ["Skyrim-Full-Stack"]
+    ports: ["8001:8000"]
+    environment:
+      - NGC_API_KEY=${NGC_API_KEY}
+      - NIM_GPU_MEM_FRACTION=0.10
+      - NIM_MAX_MODEL_LEN=4096
+    volumes: ["nim-cache:/opt/nim/.cache"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+    depends_on:
+      llm-standard:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s  # Gives the Nano model 1 minute to finish loading shards
+      
+  llm-vision:
+    image: nvcr.io/nvidia/vllm:26.01-py3
+    shm_size: '16gb'
+    profiles: ["Skyrim-Full-Stack"]
+    ports:
+      - "8002:8000"
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+    volumes:
+      - nim-cache:/root/.cache/huggingface
+    command: >
+      vllm serve "nvidia/Qwen2.5-VL-7B-Instruct-NVFP4"
+      --host 0.0.0.0
+      --port 8000
+      --trust-remote-code
+      --max-model-len 4096
+      --gpu-memory-utilization 0.15
+    depends_on:
+      llm-fast:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+ 
+  llm-diary:
+    image: nvcr.io/nvidia/vllm:26.01-py3
+    shm_size: '16gb'
+    profiles: ["Skyrim-Full-Stack"]
+    ports: ["8003:8000"]
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+    command: >
+      vllm serve "nvidia/Llama-3.1-8B-Instruct-NVFP4"
+      --host 0.0.0.0
+      --port 8000
+      --trust-remote-code
+      --max-model-len 4096
+      --gpu-memory-utilization 0.10
+    depends_on:
+      llm-vision:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   milvus:
     image: "milvusdb/milvus:v2.4.6"
     profiles: ["Skyrim-Full-Stack"]
-    depends_on: [init-chmod]
+    depends_on:
+      init-chmod:
+        condition: service_completed_successfully
     ports: ["19530:19530"]
     environment:
       - ETCD_USE_EMBED=true
@@ -43,11 +130,12 @@ services:
     volumes: ["milvus-data:/var/lib/milvus"]
     command: "milvus run standalone"
 
-  # Redis: Manages real-time AI Agent state and NPC task queues
   redis:
     image: "redis:7"
     profiles: ["Skyrim-Full-Stack"]
-    depends_on: [init-chmod]
+    depends_on:
+      init-chmod:
+        condition: service_completed_successfully
     ports: ["6379:6379"]
     volumes: ["redis-data:/data"]
 
