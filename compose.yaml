@@ -1,222 +1,180 @@
 services:
   init-chmod:
-    profiles:
-      - Skyrim-Full-Stack
+    profiles: [Skyrim-Full-Stack]
     image: busybox
     command: chmod -R 777 /opt/nim/.cache /var/lib/milvus /data
     volumes: [nim-cache:/opt/nim/.cache, milvus-data:/var/lib/milvus, redis-data:/data]
-
-  # llm-standard:
-  #   profiles:
-  #     - Skyrim-Full-Stack
-  #   image: nvcr.io/nim/qwen/qwen3-32b-dgx-spark:1.1.0-variant
-  #   ports: ["8000:8000"]
-  #   environment:
-  #     - NGC_API_KEY=${NGC_API_KEY}
-  #     - NIM_GPU_MEM_FRACTION=0.45
-  #     - NIM_MAX_MODEL_LEN=4096 
-  #   volumes: ["nim-cache:/opt/nim/.cache"]
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             device_ids: ['0']
-  #             capabilities: [gpu]
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 10
-  #     start_period: 120s
-
-  # llm-fast:
-  #   profiles:
-  #     - Skyrim-Full-Stack
-  #   image: nvcr.io/nim/nvidia/nvidia-nemotron-nano-9b-v2-dgx-spark:1.0.0-variant
-  #   ports: ["8001:8000"]
-  #   environment:
-  #     - NGC_API_KEY=${NGC_API_KEY}
-  #     - NIM_GPU_MEM_FRACTION=0.10
-  #     - NIM_MAX_MODEL_LEN=4096
-  #   volumes: ["nim-cache:/opt/nim/.cache"]
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             device_ids: ['0']
-  #             capabilities: [gpu]
-  #   depends_on:
-  #     llm-standard:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-  #     interval: 15s
-  #     timeout: 10s
-  #     retries: 10
-  #     start_period: 60s  # Gives the Nano model 1 minute to finish loading shards
+    
+  # --- LLM CORE STACK (The Brain) ---
+  llm-standard:
+    profiles: [Skyrim-Full-Stack]
+    image: nvcr.io/nim/qwen/qwen3-32b-dgx-spark:1.1.0-variant
+    ports: ["8000:8000"]
+    environment:
+      - NGC_API_KEY=${NGC_API_KEY}
+      - NIM_GPU_MEM_FRACTION=0.45
+      - NIM_MAX_MODEL_LEN=4096 
+    volumes: ["nim-cache:/opt/nim/.cache"]
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
       
-  # llm-vision:
-  #   profiles:
-  #     - Skyrim-Full-Stack
-  #   image: nvcr.io/nvidia/vllm:26.01-py3
-  #   shm_size: '16gb'
-  #   ports:
-  #     - "8002:8000"
-  #   environment:
-  #     - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
-  #     - NIM_MAX_MODEL_LEN=4096    
-  #   volumes:
-  #     - nim-cache:/root/.cache/huggingface
-  #   command: >
-  #     vllm serve "nvidia/Qwen2.5-VL-7B-Instruct-NVFP4"
-  #     --host 0.0.0.0
-  #     --port 8000
-  #     --trust-remote-code
-  #     --max-model-len 4096
-  #     --gpu-memory-utilization 0.15
-  #   depends_on:
-  #     llm-fast:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             device_ids: ['0']
-  #             capabilities: [gpu]
- 
-  # llm-diary:
-  #   profiles:
-  #     - Skyrim-Full-Stack
-  #   image: nvcr.io/nvidia/vllm:26.01-py3
-  #   shm_size: '16gb'
-  #   ports: ["8003:8000"]
-  #   environment:
-  #     - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
-  #     - NVIDIA_VISIBLE_DEVICES=all
-  #     - NIM_MAX_MODEL_LEN=4096
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             device_ids: ['0']
-  #             capabilities: [gpu]
-  #   command: >
-  #     vllm serve "nvidia/Llama-3.1-8B-Instruct-NVFP4"
-  #     --host 0.0.0.0
-  #     --port 8000
-  #     --trust-remote-code
-  #     --max-model-len 4096
-  #     --gpu-memory-utilization 0.10
-  #   depends_on:
-  #     llm-vision:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
+  llm-fast:
+    profiles: [Skyrim-Full-Stack]
+    image: nvcr.io/nim/nvidia/nvidia-nemotron-nano-9b-v2-dgx-spark:1.0.0-variant
+    ports: ["8001:8000"]
+    environment:
+      - NGC_API_KEY=${NGC_API_KEY}
+      - NIM_GPU_MEM_FRACTION=0.10
+      - NIM_MAX_MODEL_LEN=4096
+    volumes: ["nim-cache:/opt/nim/.cache"]
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+    depends_on:
+      llm-standard: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
       
+  llm-vision:
+    profiles: [Skyrim-Full-Stack]
+    image: nvcr.io/nvidia/vllm:26.01-py3
+    shm_size: '16gb'
+    ports: ["8002:8000"]
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+      - NIM_MAX_MODEL_LEN=4096    
+    volumes: ["nim-cache:/root/.cache/huggingface"]
+    command: >
+      vllm serve "nvidia/Qwen2.5-VL-7B-Instruct-NVFP4"
+      --host 0.0.0.0 --port 8000 --trust-remote-code
+      --max-model-len 4096 --gpu-memory-utilization 0.15
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+    depends_on:
+      llm-fast: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  llm-diary:
+    profiles: [Skyrim-Full-Stack]
+    image: nvcr.io/nvidia/vllm:26.01-py3
+    shm_size: '16gb'
+    ports: ["8003:8000"]
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+      - NIM_MAX_MODEL_LEN=4096
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+    command: >
+      vllm serve "nvidia/Llama-3.1-8B-Instruct-NVFP4"
+      --host 0.0.0.0 --port 8000 --trust-remote-code
+      --max-model-len 4096 --gpu-memory-utilization 0.10
+    depends_on:
+      llm-vision: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 30s    # Check every 30 seconds
+      timeout: 30s     # Give the curl 30s to respond (DPO can hang the API briefly)
+      retries: 15      # Increased from 5 to 15 (gives it ~7-8 minutes total to stabilize)
+      start_period: 300s # 5-minute grace period before healthchecks even start counting
+
+  # --- SENSORY STACK (The Ears, Voice, and Judgment) ---
   stt-whisper:
+    profiles: [Skyrim-Full-Stack]
     image: ghcr.io/linuxserver/faster-whisper:arm64v8-latest
     container_name: agentic-rag-stt-whisper-1
-    profiles:
-      - Skyrim-Full-Stack
     environment:
       - WHISPER_MODEL=Numbat/faster-skyrim-whisper-base.en
       - WHISPER_LANG=en
       - PUID=911
       - PGID=911
       - TZ=America/Chicago
-      # Keep these for generic settings
-      - HF_HUB_OFFLINE=0
     volumes:
       - /home/surfer11may/dwemer/remote-faster-whisper/models:/app/models
-    ports:
-      - "8004:10300"
+    ports: ["8004:10300"]
     deploy:
       resources:
         reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['0']
-              capabilities: [gpu] # Ensures Numbat uses the GB10 Tensor cores
+          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+    depends_on:
+      llm-diary: {condition: service_healthy}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:10300/"] 
+      # FIX: Use /dev/tcp to verify the port is alive without needing HTTP/curl
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/10300'"]
       interval: 30s
-      timeout: 20s
-      retries: 20
-      start_period: 600s
+      timeout: 10s
+      retries: 15
+      start_period: 300s # Gives the GB10 5 mins to load Numbat weights
       
   tts-xtts:
+    profiles: [Skyrim-Full-Stack]
     image: rajeshjsl3/xtts-api-server:working.29.10.2024
     container_name: agentic-rag-tts-xtts-1
-    profiles:
-      - Skyrim-Full-Stack
     environment:
-      - COQUI_TOS_AGREED=1  # CRITICAL: Fixes the "silent hang" on startup
+      - COQUI_TOS_AGREED=1
       - USE_GPU=true
     volumes:
       - /home/surfer11may/dwemer/xtts-api-server:/app/data
-    ports:
-      - "8020:8020"
+    ports: ["8020:8020"]
     deploy:
       resources:
         reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['0']
-              capabilities: [gpu] # Reserves VRAM for the synthesis "Voice"
+          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
     depends_on:
-      stt-whisper:
-        condition: service_started
+      stt-whisper: {condition: service_healthy}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8020/docs"]
-      interval: 15s
+      # XTTS usually has a /docs or / endpoint, but TCP is safer for cross-stack sync
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8020'"]
+      interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 45s
+      start_period: 60s
       
   minime-t5:
-    image: dwemer/minime-t5:arm64 # <--- This matches your build
+    profiles: [Skyrim-Full-Stack]
+    image: dwemer/minime-t5:arm64
     container_name: agentic-rag-minime-t5-1
-    profiles:
-      - Skyrim-Full-Stack
-    ports:
-      - "8082:8003"
+    ports: ["8082:8003"]
     volumes:
       - /home/surfer11may/dwemer/minime-t5:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
     depends_on:
-      tts-xtts:
-        condition: service_healthy
+      tts-xtts: {condition: service_healthy}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8003/"]
       interval: 30s
       timeout: 10s
       retries: 5
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['0']
-              capabilities: [gpu]
-              
+      
+  # --- DATA STACK ---
   milvus:
-    profiles:
-      - Skyrim-Full-Stack
+    profiles: [Skyrim-Full-Stack]
     image: "milvusdb/milvus:v2.4.6"
     depends_on:
-      init-chmod:
-        condition: service_completed_successfully
+      init-chmod: {condition: service_completed_successfully}
     ports: ["19530:19530"]
     environment:
       - ETCD_USE_EMBED=true
@@ -225,12 +183,10 @@ services:
     command: "milvus run standalone"
     
   redis:
-    profiles:
-      - Skyrim-Full-Stack
+    profiles: [Skyrim-Full-Stack]
     image: "redis:7"
     depends_on:
-      init-chmod:
-        condition: service_completed_successfully
+      init-chmod: {condition: service_completed_successfully}
     ports: ["6379:6379"]
     volumes: ["redis-data:/data"]
     
