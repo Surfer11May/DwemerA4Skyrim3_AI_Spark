@@ -19,15 +19,13 @@ services:
       resources:
         reservations:
           devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
-    depends_on:
-      init-chmod: {condition: service_completed_successfully}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
       interval: 30s
-      timeout: 15s
-      retries: 20
-      start_period: 600s
-    
+      timeout: 10s
+      retries: 10
+      start_period: 800s
+      
   llm-fast:
     profiles: [Skyrim-Full-Stack]
     image: nvcr.io/nim/nvidia/nvidia-nemotron-nano-9b-v2-dgx-spark:1.0.0-variant
@@ -45,10 +43,10 @@ services:
       llm-standard: {condition: service_healthy}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-      interval: 20s
+      interval: 15s
       timeout: 10s
-      retries: 15
-      start_period: 300s
+      retries: 10
+      start_period: 600s
       
   llm-vision:
     profiles: [Skyrim-Full-Stack]
@@ -95,10 +93,10 @@ services:
       llm-vision: {condition: service_healthy}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-      interval: 30s    
-      timeout: 30s     
-      retries: 15      
-      start_period: 300s 
+      interval: 30s    # Check every 30 seconds
+      timeout: 30s     # Give the curl 30s to respond (DPO can hang the API briefly)
+      retries: 15      # Increased from 5 to 15 (gives it ~7-8 minutes total to stabilize)
+      start_period: 300s # 5-minute grace period before healthchecks even start counting
 
   # --- SENSORY STACK (The Ears, Voice, and Judgment) ---
   stt-whisper:
@@ -121,11 +119,12 @@ services:
     depends_on:
       llm-diary: {condition: service_healthy}
     healthcheck:
+      # FIX: Use /dev/tcp to verify the port is alive without needing HTTP/curl
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/10300'"]
       interval: 30s
       timeout: 10s
       retries: 15
-      start_period: 300s 
+      start_period: 300s # Gives the GB10 5 mins to load Numbat weights
       
   tts-xtts:
     profiles: [Skyrim-Full-Stack]
@@ -144,6 +143,7 @@ services:
     depends_on:
       stt-whisper: {condition: service_healthy}
     healthcheck:
+      # XTTS usually has a /docs or / endpoint, but TCP is safer for cross-stack sync
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8020'"]
       interval: 20s
       timeout: 10s
