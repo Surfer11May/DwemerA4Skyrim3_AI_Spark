@@ -24,7 +24,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-      start_period: 120s
+      start_period: 900s
       
   llm-fast:
     profiles: [Skyrim-Full-Stack]
@@ -152,6 +152,9 @@ services:
       
   minime-t5:
     profiles: [Skyrim-Full-Stack]
+    build:
+      context: /home/surfer11may/dwemer/minime-t5         
+      dockerfile: Dockerfile
     image: dwemer/minime-t5:arm64
     container_name: agentic-rag-minime-t5-1
     ports: ["8082:8003"]
@@ -161,13 +164,16 @@ services:
       resources:
         reservations:
           devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+        limits:
+          memory: 2G       
     depends_on:
       tts-xtts: {condition: service_healthy}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/"]
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8003'"]
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 60s
       
   # --- DATA STACK ---
   milvus:
