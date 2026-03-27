@@ -8,7 +8,7 @@ services:
   # --- LLM CORE STACK (The Brain) ---
   llm-standard:
     profiles: [Skyrim-Full-Stack]
-    image: nvcr.io/nim/qwen/qwen3-32b-dgx-spark:1.1.0-variant
+    image: nvcr.io/nim/nvidia/nemotron-3-nano:1.7.0-variant
     ports: ["8000:8000"]
     environment:
       - NGC_API_KEY=${NGC_API_KEY}
