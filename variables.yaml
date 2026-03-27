@@ -1,0 +1,5 @@
+variables:
+  - name: NVIDIA_API_KEY
+    value: "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"
+  - name: TAVILY_API_KEY
+    value: "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"
