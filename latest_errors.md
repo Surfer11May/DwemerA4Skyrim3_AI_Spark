@@ -1,5 +1,9 @@
-errors right after safetensors complete but the desired 4bit model
-llm-standard-1       | (EngineCore_DP0 pid=190) 
+errors right after safetensors complete but the desired 4bit model downloads.
+The keys not available seems to be a problem of detecting in the wrong place or maybe time but the keys
+are obvously working for all models. Might be good to know why the report is not correct but not as important now. 
+One of the errors suggested it might be from quantization 
+llm-standard-1       | (EngineCore_DP0 pid=190) handling. Evaluate and edit fixes for next test. let me know when ready
+to run next test.
 Loading safetensors checkpoint shards: 100% Completed | 5/5 [01:39<00:00, 20.24s/it]
 llm-standard-1       | (EngineCore_DP0 pid=190) 
 Loading safetensors checkpoint shards: 100% Completed | 5/5 [01:39<00:00, 19.83s/it]
