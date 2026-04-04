@@ -17,9 +17,8 @@ if [ ! -w "/project" ]; then
     sudo chown -R $(id -u):$(id -g) /project
 fi
 
-# Determine the project root (assuming this script is in <project_root>/build/postBuild.bash)
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+# Set project root to /project for AI Workbench environment
+PROJECT_DIR="/project"
 
 # Create a virtual environment with Python 3.10, using system site packages for apt-installed Python packages
 if [ -d "/project/venv" ]; then
