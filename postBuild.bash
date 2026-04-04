@@ -3,6 +3,13 @@
 # after all system packages and programming language specific package have been installed.
 #
 # Note: This file may be removed if you don't need to use it
-sudo -E apt-get update && sudo -E apt-get install ffmpeg libsm6 libxext6 -y
+sudo -E apt-get update && sudo -E apt-get install ffmpeg libsm6 libxext6 python3.10 python3.10-venv python3.10-dev -y
 sudo mkdir -p /project/data/nim-cache /project/data/nim-stow
 sudo chmod -R 777 /project/data/nim-cache /project/data/nim-stow
+
+# Create a virtual environment with Python 3.10, using system site packages for apt-installed Python packages
+if [ ! -d "/project/venv" ]; then
+    python3.10 -m venv --system-site-packages /project/venv
+fi
+# Install requirements into the virtual environment
+/project/venv/bin/pip install -r /project/requirements.txt
