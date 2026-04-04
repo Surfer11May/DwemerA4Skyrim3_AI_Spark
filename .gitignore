@@ -58,4 +58,8 @@ data/scratch/*
 data/chroma.sqlite3
 data/
 code/output.log
+.aider*.env
+.env
+.aider*
+.env
 .aider*
