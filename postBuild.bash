@@ -23,4 +23,4 @@ if [ -d "/project/venv" ]; then
 fi
 python3.10 -m venv --system-site-packages /project/venv
 # Install requirements into the virtual environment
-/project/venv/bin/pip install -r /opt/project/requirements.txt
+/project/venv/bin/pip install -r /project/requirements.txt
