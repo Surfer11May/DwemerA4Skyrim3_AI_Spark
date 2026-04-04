@@ -17,10 +17,14 @@ if [ ! -w "/project" ]; then
     sudo chown -R $(id -u):$(id -g) /project
 fi
 
+# Determine the project root (assuming this script is in <project_root>/build/postBuild.bash)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+
 # Create a virtual environment with Python 3.10, using system site packages for apt-installed Python packages
 if [ -d "/project/venv" ]; then
     rm -rf /project/venv
 fi
 python3.10 -m venv --system-site-packages /project/venv
 # Install requirements into the virtual environment
-/project/venv/bin/pip install -r /project/requirements.txt
+/project/venv/bin/pip install -r "${PROJECT_DIR}/requirements.txt"
