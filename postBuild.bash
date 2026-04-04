@@ -8,8 +8,9 @@ sudo mkdir -p /project/data/nim-cache /project/data/nim-stow
 sudo chmod -R 777 /project/data/nim-cache /project/data/nim-stow
 
 # Create a virtual environment with Python 3.10, using system site packages for apt-installed Python packages
-if [ ! -d "/project/venv" ]; then
-    python3.10 -m venv --system-site-packages /project/venv
+if [ -d "/project/venv" ]; then
+    sudo rm -rf /project/venv
 fi
+python3.10 -m venv --system-site-packages /project/venv
 # Install requirements into the virtual environment
 /project/venv/bin/pip install -r /project/requirements.txt
