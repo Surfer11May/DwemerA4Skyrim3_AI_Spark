@@ -3,7 +3,11 @@
 # after all system packages and programming language specific package have been installed.
 #
 # Note: This file may be removed if you don't need to use it
-sudo -E apt-get update && sudo -E apt-get install ffmpeg libsm6 libxext6 python3.10 python3.10-venv python3.10-dev -y
+sudo apt-get update
+sudo apt-get install -y software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt-get update
+sudo -E apt-get install ffmpeg libsm6 libxext6 python3.10 python3.10-venv python3.10-dev -y
 sudo mkdir -p /project/data/nim-cache /project/data/nim-stow
 sudo chmod -R 777 /project/data/nim-cache /project/data/nim-stow
 
