@@ -62,4 +62,5 @@ code/output.log
 .env
 .aider*
 .env
-.aider*
+.aider*.env
+.env
