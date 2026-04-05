@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """The definition of the application configuration."""
+import torch
 from chatui.configuration_wizard import ConfigWizard, configclass, configfield
 
 
@@ -46,4 +47,24 @@ class AppConfig(ConfigWizard):
         "modelName",
         default="local",
         help_txt="The name of the hosted LLM model.",
+    )
+    model_load_in_4bit: bool = configfield(
+        "modelLoadIn4bit",
+        default=True,
+        help_txt="Whether to load the model in 4-bit quantization mode.",
+    )
+    model_bnb_4bit_compute_dtype: str = configfield(
+        "modelBnb4bitComputeDtype",
+        default="bfloat16",
+        help_txt="Compute dtype for 4-bit quantization (e.g., float16, bfloat16).",
+    )
+    model_bnb_4bit_quant_type: str = configfield(
+        "modelBnb4bitQuantType",
+        default="nf4",
+        help_txt="Quantization type for 4-bit quantization (e.g., nf4, fp4).",
+    )
+    model_bnb_4bit_use_double_quant: bool = configfield(
+        "modelBnb4bitUseDoubleQuant",
+        default=True,
+        help_txt="Whether to use double quantization for 4-bit quantization.",
     )
