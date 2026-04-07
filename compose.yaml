@@ -8,13 +8,21 @@ services:
   # --- LLM CORE STACK (The Brain) ---
   llm-standard:
     profiles: [Skyrim-Full-Stack]
-    image: nvcr.io/nim/qwen/qwen3-32b-dgx-spark:1.1.0-variant
+    image: nvcr.io/nvidia/vllm:26.02-py3
     ports: ["8000:8000"]
     environment:
       - NGC_API_KEY=${NGC_API_KEY}
-      - NIM_GPU_MEM_FRACTION=0.45
-      - NIM_MAX_MODEL_LEN=4096 
-    volumes: ["nim-cache:/opt/nim/.cache"]
+      - HF_TOKEN=${HF_TOKEN}
+      - VLLM_USE_FLASHINFER_MOE_FP4=1
+    volumes:
+      - "nim-cache:/root/.cache/huggingface"
+    command: >
+      vllm serve "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4"
+      --host 0.0.0.0
+      --port 8000
+      --trust-remote-code
+      --max-model-len 4096
+      --gpu-memory-utilization 0.45
     deploy:
       resources:
         reservations:
@@ -23,8 +31,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
       interval: 30s
       timeout: 10s
-      retries: 10
-      start_period: 900s
+      retries: 15
+      start_period: 1200s
       
   llm-fast:
     profiles: [Skyrim-Full-Stack]
