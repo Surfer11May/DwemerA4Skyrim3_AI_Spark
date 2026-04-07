@@ -14,8 +14,10 @@ services:
     environment:
       - NGC_API_KEY=${NGC_API_KEY}
       - HF_TOKEN=${HF_TOKEN}
-      - VLLM_USE_FLASHINFER_MOE_FP4=1
+      - VLLM_USE_FLASHINFER_MOE_FP4=0
+      - VLLM_ATTENTION_BACKEND=XFORMERS
       - HF_HOME=/opt/nim/.cache
+      - PYTHONUNBUFFERED=1
     volumes:
       - "nim-cache:/opt/nim/.cache"
     command: >
@@ -23,12 +25,14 @@ services:
       --host 0.0.0.0
       --port 8000
       --trust-remote-code
-      --max-model-len 512
-      --gpu-memory-utilization 0.15
+      --max-model-len 256
+      --gpu-memory-utilization 0.10
       --disable-log-requests
       --enable-prefix-caching
-      --num-gpu-blocks-override 32
+      --num-gpu-blocks-override 16
       --max-num-seqs 1
+      --block-size 16
+      --swap-space 2
     deploy:
       resources:
         reservations:
