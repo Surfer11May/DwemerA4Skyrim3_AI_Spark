@@ -23,10 +23,9 @@ services:
       --host 0.0.0.0
       --port 8000
       --trust-remote-code
-      --max-model-len 128
-      --gpu-memory-utilization 0.08
-      --disable-log-requests
-      --swap-space 2
+      --max-model-len 64
+      --gpu-memory-utilization 0.15
+      --swap-space 4
     deploy:
       resources:
         reservations:
