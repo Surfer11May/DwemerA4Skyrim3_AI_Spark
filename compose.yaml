@@ -14,8 +14,6 @@ services:
     environment:
       - NGC_API_KEY=${NGC_API_KEY}
       - HF_TOKEN=${HF_TOKEN}
-      - VLLM_USE_FLASHINFER_MOE_FP4=0
-      - VLLM_ATTENTION_BACKEND=XFORMERS
       - HF_HOME=/opt/nim/.cache
       - PYTHONUNBUFFERED=1
     volumes:
@@ -25,13 +23,9 @@ services:
       --host 0.0.0.0
       --port 8000
       --trust-remote-code
-      --max-model-len 256
-      --gpu-memory-utilization 0.10
+      --max-model-len 128
+      --gpu-memory-utilization 0.08
       --disable-log-requests
-      --enable-prefix-caching
-      --num-gpu-blocks-override 16
-      --max-num-seqs 1
-      --block-size 16
       --swap-space 2
     deploy:
       resources:
@@ -42,7 +36,7 @@ services:
       interval: 30s
       timeout: 20s
       retries: 60
-      start_period: 4000s
+      start_period: 6000s
       
   llm-fast:
     profiles: [Skyrim-Full-Stack]
