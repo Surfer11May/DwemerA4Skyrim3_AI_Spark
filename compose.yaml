@@ -23,11 +23,11 @@ services:
       --host 0.0.0.0
       --port 8000
       --trust-remote-code
-      --max-model-len 4096
-      --gpu-memory-utilization 0.40
+      --max-model-len 2048
+      --gpu-memory-utilization 0.25
       --disable-log-requests
       --enable-prefix-caching
-      --swap-space 4
+      --num-gpu-blocks-override 128
     deploy:
       resources:
         reservations:
@@ -36,8 +36,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
       interval: 30s
       timeout: 20s
-      retries: 40
-      start_period: 2400s
+      retries: 60
+      start_period: 3000s
       
   llm-fast:
     profiles: [Skyrim-Full-Stack]
