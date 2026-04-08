@@ -201,6 +201,7 @@ services:
     image: "milvusdb/milvus:v2.4.6"
     depends_on:
       init-chmod: {condition: service_completed_successfully}
+      llm-standard: {condition: service_healthy}
     ports: ["19530:19530"]
     environment:
       - ETCD_USE_EMBED=true
@@ -213,6 +214,7 @@ services:
     image: "redis:7"
     depends_on:
       init-chmod: {condition: service_completed_successfully}
+      llm-standard: {condition: service_healthy}
     ports: ["6379:6379"]
     volumes: ["redis-data:/data"]
     
