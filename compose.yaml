@@ -25,7 +25,7 @@ services:
       --port 8000
       --trust-remote-code
       --max-model-len 64
-      --gpu-memory-utilization 0.50
+      --gpu-memory-utilization 0.35
       --disable-log-requests
       --swap-space 4
     deploy:
@@ -87,6 +87,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 600s
 
   llm-diary:
     profiles: [Skyrim-Full-Stack]
@@ -163,7 +164,7 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 200s
       
   minime-t5:
     profiles: [Skyrim-Full-Stack]
@@ -188,7 +189,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 100s
       
   # --- DATA STACK ---
   milvus:
