@@ -25,7 +25,7 @@ services:
       --port 8000
       --trust-remote-code
       --max-model-len 64
-      --gpu-memory-utilization 0.25
+      --gpu-memory-utilization 0.30
       --disable-log-requests
       --swap-space 4
     deploy:
@@ -47,7 +47,7 @@ services:
     ports: ["8001:8000"]
     environment:
       - NGC_API_KEY=${NGC_API_KEY}
-      - NIM_GPU_MEM_FRACTION=0.10
+      - NIM_GPU_MEM_FRACTION=0.15
       - NIM_MAX_MODEL_LEN=4096
     volumes: ["nim-cache:/opt/nim/.cache"]
     deploy:
@@ -75,7 +75,7 @@ services:
     command: >
       vllm serve "nvidia/Qwen2.5-VL-7B-Instruct-NVFP4"
       --host 0.0.0.0 --port 8000 --trust-remote-code
-      --max-model-len 4096 --gpu-memory-utilization 0.12
+      --max-model-len 4096 --gpu-memory-utilization 0.15
     deploy:
       resources:
         reservations:
@@ -104,7 +104,7 @@ services:
     command: >
       vllm serve "nvidia/Llama-3.1-8B-Instruct-NVFP4"
       --host 0.0.0.0 --port 8000 --trust-remote-code
-      --max-model-len 4096 --gpu-memory-utilization 0.10
+      --max-model-len 4096 --gpu-memory-utilization 0.12
     depends_on:
       llm-vision: {condition: service_healthy}
     healthcheck:
