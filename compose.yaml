@@ -25,7 +25,7 @@ services:
       --port 8000
       --trust-remote-code
       --max-model-len 64
-      --gpu-memory-utilization 0.30
+      --gpu-memory-utilization 0.22
       --disable-log-requests
       --swap-space 4
     deploy:
