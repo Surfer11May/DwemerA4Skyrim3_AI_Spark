@@ -16,9 +16,6 @@ services:
       - HF_TOKEN=${HF_TOKEN}
       - HF_HOME=/opt/nim/.cache
       - PYTHONUNBUFFERED=1
-      - VLLM_USE_V1=0
-      - VLLM_ATTENTION_BACKEND=FLASHINFER
-      - VLLM_DISABLE_COMPILE_CACHE=1
     volumes:
       - "nim-cache:/opt/nim/.cache"
     command: >
@@ -26,13 +23,10 @@ services:
       --host 0.0.0.0
       --port 8000
       --trust-remote-code
-      --max-model-len 32
-      --gpu-memory-utilization 0.05
+      --max-model-len 64
+      --gpu-memory-utilization 0.50
       --disable-log-requests
       --swap-space 4
-      --block-size 4
-      --max-num-batched-tokens 16
-      --max-num-seqs 1
     deploy:
       resources:
         reservations:
@@ -44,7 +38,7 @@ services:
       interval: 30s
       timeout: 20s
       retries: 60
-      start_period: 12000s
+      start_period: 6000s
       
   llm-fast:
     profiles: [Skyrim-Full-Stack]
