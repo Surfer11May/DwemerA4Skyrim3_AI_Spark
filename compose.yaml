@@ -16,6 +16,7 @@ services:
       - HF_TOKEN=${HF_TOKEN}
       - HF_HOME=/opt/nim/.cache
       - PYTHONUNBUFFERED=1
+      - NIM_MAX_MODEL_LEN=4096
     volumes:
       - "nim-cache:/opt/nim/.cache"
     command: >
