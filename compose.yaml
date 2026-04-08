@@ -27,11 +27,11 @@ services:
       --port 8000
       --trust-remote-code
       --max-model-len 32
-      --gpu-memory-utilization 0.08
+      --gpu-memory-utilization 0.05
       --disable-log-requests
-      --swap-space 8
-      --block-size 8
-      --max-num-batched-tokens 32
+      --swap-space 4
+      --block-size 4
+      --max-num-batched-tokens 16
       --max-num-seqs 1
     deploy:
       resources:
