@@ -5,25 +5,15 @@ echo "===================================="
 
 # Test llm-standard (port 8000)
 echo -e "\nTesting llm-standard (port 8000):"
-start_time=$(date +%s.%N)
-response=$(curl -s -X POST http://localhost:8000/v1/completions \
+curl -s -X POST http://localhost:8000/v1/completions \
   -H "Content-Type: application/json" \
-  -d '{"model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4", "prompt": "Skyrim is", "max_tokens": 20}')
-end_time=$(date +%s.%N)
-elapsed=$(echo "$end_time - $start_time" | bc)
-echo "$response" | jq '.choices[0].text'
-echo "Response time: $(printf "%.2f" $elapsed)s"
+  -d '{"model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4", "prompt": "Skyrim is", "max_tokens": 20}' | jq '.choices[0].text'
 
 # Test llm-fast (port 8001)
 echo -e "\nTesting llm-fast (port 8001):"
-start_time=$(date +%s.%N)
-response=$(curl -s -X POST http://localhost:8001/v1/completions \
+curl -s -X POST http://localhost:8001/v1/completions \
   -H "Content-Type: application/json" \
-  -d '{"model": "nvidia/nemotron-nano-9b-v2", "prompt": "The Dragonborn", "max_tokens": 20}')
-end_time=$(date +%s.%N)
-elapsed=$(echo "$end_time - $start_time" | bc)
-echo "$response" | jq '.choices[0].text'
-echo "Response time: $(printf "%.2f" $elapsed)s"
+  -d '{"model": "nvidia/nemotron-nano-9b-v2", "prompt": "The Dragonborn", "max_tokens": 20}' | jq '.choices[0].text'
 
 # Test llm-vision (port 8002) - describe an image
 echo -e "\nTesting llm-vision (port 8002) image description:"
@@ -81,52 +71,32 @@ fi
 
 # Test llm-diary (port 8003) - test with a prompt
 echo -e "\nTesting llm-diary (port 8003) with diary prompt:"
-start_time=$(date +%s.%N)
-response=$(curl -s -X POST http://localhost:8003/v1/completions \
+curl -s -X POST http://localhost:8003/v1/completions \
   -H "Content-Type: application/json" \
-  -d '{"model": "nvidia/Llama-3.1-8B-Instruct-NVFP4", "prompt": "Today I felt", "max_tokens": 20}')
-end_time=$(date +%s.%N)
-elapsed=$(echo "$end_time - $start_time" | bc)
-echo "$response" | jq '.choices[0].text'
-echo "Response time: $(printf "%.2f" $elapsed)s"
+  -d '{"model": "nvidia/Llama-3.1-8B-Instruct-NVFP4", "prompt": "Today I felt", "max_tokens": 20}' | jq '.choices[0].text'
 
 # Test stt-whisper (port 8004) - check if port is open
 echo -e "\nTesting stt-whisper (port 8004) connectivity:"
-start_time=$(date +%s.%N)
 if nc -z localhost 8004; then
-  result="Port 8004 is open"
+  echo "Port 8004 is open"
 else
-  result="Port 8004 is not accessible"
+  echo "Port 8004 is not accessible"
 fi
-end_time=$(date +%s.%N)
-elapsed=$(echo "$end_time - $start_time" | bc)
-echo "$result"
-echo "Response time: $(printf "%.2f" $elapsed)s"
 
 # Test tts-xtts (port 8020) - check if port is open
 echo -e "\nTesting tts-xtts (port 8020) connectivity:"
-start_time=$(date +%s.%N)
 if nc -z localhost 8020; then
-  result="Port 8020 is open"
+  echo "Port 8020 is open"
 else
-  result="Port 8020 is not accessible"
+  echo "Port 8020 is not accessible"
 fi
-end_time=$(date +%s.%N)
-elapsed=$(echo "$end_time - $start_time" | bc)
-echo "$result"
-echo "Response time: $(printf "%.2f" $elapsed)s"
 
 # Test minime-t5 (port 8082) - check if port is open
 echo -e "\nTesting minime-t5 (port 8082) connectivity:"
-start_time=$(date +%s.%N)
 if nc -z localhost 8082; then
-  result="Port 8082 is open"
+  echo "Port 8082 is open"
 else
-  result="Port 8082 is not accessible"
+  echo "Port 8082 is not accessible"
 fi
-end_time=$(date +%s.%N)
-elapsed=$(echo "$end_time - $start_time" | bc)
-echo "$result"
-echo "Response time: $(printf "%.2f" $elapsed)s"
 
 echo -e "\nTesting complete."
