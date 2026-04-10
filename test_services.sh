@@ -15,9 +15,41 @@ curl -s -X POST http://localhost:8001/v1/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "nvidia/nemotron-nano-9b-v2", "prompt": "The Dragonborn", "max_tokens": 20}' | jq '.choices[0].text'
 
-# Test llm-vision (port 8002) - just check if it's responding
-echo -e "\nTesting llm-vision (port 8002) health endpoint:"
-curl -s http://localhost:8002/v1/models | jq '.data[0].id'
+# Test llm-vision (port 8002) - describe an image
+echo -e "\nTesting llm-vision (port 8002) image description:"
+if [ -f "Phototest" ]; then
+  # Get the first available model
+  MODEL_ID=$(curl -s http://localhost:8002/v1/models | jq -r '.data[0].id')
+  if [ -z "$MODEL_ID" ] || [ "$MODEL_ID" = "null" ]; then
+    echo "Failed to get model ID from llm-vision"
+  else
+    # Encode image to base64
+    BASE64_IMAGE=$(base64 -w 0 "Phototest")
+    # Construct JSON payload
+    JSON_PAYLOAD=$(cat <<EOF
+{
+  "model": "$MODEL_ID",
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {"type": "text", "text": "Describe this image in a short sentence."},
+        {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,$BASE64_IMAGE"}}
+      ]
+    }
+  ],
+  "max_tokens": 100
+}
+EOF
+)
+    # Send request to vision endpoint
+    curl -s -X POST http://localhost:8002/v1/chat/completions \
+      -H "Content-Type: application/json" \
+      -d "$JSON_PAYLOAD" | jq '.choices[0].message.content'
+  fi
+else
+  echo "Phototest file not found, skipping vision test"
+fi
 
 # Test llm-diary (port 8003) - just check if it's responding
 echo -e "\nTesting llm-diary (port 8003) health endpoint:"
