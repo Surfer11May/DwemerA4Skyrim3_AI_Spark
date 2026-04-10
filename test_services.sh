@@ -35,53 +35,41 @@ if [ -f "PhotoTest.JPG" ]; then
   else
     # Encode image to base64
     BASE64_IMAGE=$(base64 -w 0 "PhotoTest.JPG")
-    # Create JSON payload
-    read -r -d '' JSON_PAYLOAD <<EOF
-{
-  "model": "$MODEL_ID",
-  "messages": [
-    {
-      "role": "user",
-      "content": [
-        {
-          "type": "text",
-          "text": "Describe this image in a short sentence."
-        },
-        {
-          "type": "image_url",
-          "image_url": {
-            "url": "data:image/jpeg;base64,$BASE64_IMAGE"
-          }
-        }
-      ]
-    }
-  ],
-  "max_tokens": 100
-}
-EOF
-    # Send request to vision endpoint and measure time
+    # Create JSON payload and send via stdin to avoid argument list issues
     start_time=$(date +%s.%N)
-    response=$(curl -s -X POST http://localhost:8002/v1/chat/completions \
+    {
+      echo '{'
+      echo '  "model": "'"$MODEL_ID"'",'
+      echo '  "messages": ['
+      echo '    {'
+      echo '      "role": "user",'
+      echo '      "content": ['
+      echo '        {'
+      echo '          "type": "text",'
+      echo '          "text": "Describe this image in a short sentence."'
+      echo '        },'
+      echo '        {'
+      echo '          "type": "image_url",'
+      echo '          "image_url": {'
+      echo '            "url": "data:image/jpeg;base64,'"$BASE64_IMAGE"'"'
+      echo '          }'
+      echo '        }'
+      echo '      ]'
+      echo '    }'
+      echo '  ],'
+      echo '  "max_tokens": 100'
+      echo '}'
+    } | response=$(curl -s -X POST http://localhost:8002/v1/chat/completions \
       -H "Content-Type: application/json" \
-      -d "$JSON_PAYLOAD")
+      -d @-)
     end_time=$(date +%s.%N)
     elapsed=$(echo "$end_time - $start_time" | bc)
     
-    # Handle both chat and completion response formats
-    content=$(echo "$response" | jq -r '.choices[0].message.content // .choices[0].text // empty')
+    # Extract and format the response properly
+    content=$(echo "$response" | jq -r '.choices[0].message.content // empty')
     if [ -z "$content" ]; then
-      # Fallback to showing the raw response structure for debugging
-      echo "Unexpected response format:"
-      echo "$response" | jq '{
-        id: .id,
-        object: .object,
-        model: .model,
-        choices: [.choices[] | {
-          index: .index,
-          message: .message // .text,
-          finish_reason: .finish_reason
-        }]
-      }'
+      # Fallback to raw response if content is empty
+      echo "$response" | jq '.'
     else
       echo "$content"
     fi
