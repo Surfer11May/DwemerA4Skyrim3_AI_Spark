@@ -39,7 +39,7 @@ services:
       interval: 30s
       timeout: 20s
       retries: 60
-      start_period: 6000s
+      start_period: 900s
       
   llm-fast:
     profiles: [Skyrim-Full-Stack]
@@ -87,7 +87,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 600s
+      start_period: 900s
 
   llm-diary:
     profiles: [Skyrim-Full-Stack]
@@ -112,7 +112,7 @@ services:
       interval: 30s    # Check every 30 seconds
       timeout: 30s     # Give the curl 30s to respond (DPO can hang the API briefly)
       retries: 15      # Increased from 5 to 15 (gives it ~7-8 minutes total to stabilize)
-      start_period: 300s # 5-minute grace period before healthchecks even start counting
+      start_period: 500s # 5-minute grace period before healthchecks even start counting
 
   # --- SENSORY STACK (The Ears, Voice, and Judgment) ---
   stt-whisper:
@@ -164,7 +164,7 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 200s
+      start_period: 300s
       
   minime-t5:
     profiles: [Skyrim-Full-Stack]
@@ -191,7 +191,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 100s
+      start_period: 200s
       
   # --- DATA STACK ---
   milvus:
