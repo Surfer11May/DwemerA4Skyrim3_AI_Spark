@@ -35,33 +35,35 @@ if [ -f "PhotoTest.JPG" ]; then
   else
     # Encode image to base64
     BASE64_IMAGE=$(base64 -w 0 "PhotoTest.JPG")
-    # Create JSON payload and send via stdin to avoid argument list issues
-    start_time=$(date +%s.%N)
+    # Create JSON payload
+    read -r -d '' JSON_PAYLOAD <<EOF
+{
+  "model": "$MODEL_ID",
+  "messages": [
     {
-      echo '{'
-      echo '  "model": "'"$MODEL_ID"'",'
-      echo '  "messages": ['
-      echo '    {'
-      echo '      "role": "user",'
-      echo '      "content": ['
-      echo '        {'
-      echo '          "type": "text",'
-      echo '          "text": "Describe this image in a short sentence."'
-      echo '        },'
-      echo '        {'
-      echo '          "type": "image_url",'
-      echo '          "image_url": {'
-      echo '            "url": "data:image/jpeg;base64,'"$BASE64_IMAGE"'"'
-      echo '          }'
-      echo '        }'
-      echo '      ]'
-      echo '    }'
-      echo '  ],'
-      echo '  "max_tokens": 100'
-      echo '}'
-    } | response=$(curl -s -X POST http://localhost:8002/v1/chat/completions \
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Describe this image in a short sentence."
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "data:image/jpeg;base64,$BASE64_IMAGE"
+          }
+        }
+      ]
+    }
+  ],
+  "max_tokens": 100
+}
+EOF
+    # Send request to vision endpoint and measure time
+    start_time=$(date +%s.%N)
+    response=$(curl -s -X POST http://localhost:8002/v1/chat/completions \
       -H "Content-Type: application/json" \
-      -d @-)
+      -d "$JSON_PAYLOAD")
     end_time=$(date +%s.%N)
     elapsed=$(echo "$end_time - $start_time" | bc)
     
