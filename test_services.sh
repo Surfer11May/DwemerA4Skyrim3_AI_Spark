@@ -64,7 +64,15 @@ if [ -f "PhotoTest.JPG" ]; then
       -d @-)
     end_time=$(date +%s.%N)
     elapsed=$(echo "$end_time - $start_time" | bc)
-    echo "$response" | jq '.choices[0].message.content'
+    
+    # Extract and format the response properly
+    content=$(echo "$response" | jq -r '.choices[0].message.content // empty')
+    if [ -z "$content" ]; then
+      # Fallback to raw response if content is empty
+      echo "$response" | jq '.'
+    else
+      echo "$content"
+    fi
     echo "Response time: $(printf "%.2f" $elapsed)s"
   fi
 else
