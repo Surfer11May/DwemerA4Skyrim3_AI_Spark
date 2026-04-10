@@ -55,12 +55,12 @@ fi
 echo -e "\nTesting llm-diary (port 8003) health endpoint:"
 curl -s http://localhost:8003/v1/models | jq '.data[0].id'
 
-# Test stt-whisper (port 10300) - check if port is open
-echo -e "\nTesting stt-whisper (port 10300) connectivity:"
-if nc -z localhost 10300; then
-  echo "Port 10300 is open"
+# Test stt-whisper (port 8004) - check if port is open
+echo -e "\nTesting stt-whisper (port 8004) connectivity:"
+if nc -z localhost 8004; then
+  echo "Port 8004 is open"
 else
-  echo "Port 10300 is not accessible"
+  echo "Port 8004 is not accessible"
 fi
 
 # Test tts-xtts (port 8020) - check if port is open
@@ -71,12 +71,12 @@ else
   echo "Port 8020 is not accessible"
 fi
 
-# Test minime-t5 (port 8003) - check if port is open
-echo -e "\nTesting minime-t5 (port 8003) connectivity:"
-if nc -z localhost 8003; then
-  echo "Port 8003 is open"
+# Test minime-t5 (port 8082) - check if port is open
+echo -e "\nTesting minime-t5 (port 8082) connectivity:"
+if nc -z localhost 8082; then
+  echo "Port 8082 is open"
 else
-  echo "Port 8003 is not accessible"
+  echo "Port 8082 is not accessible"
 fi
 
 echo -e "\nTesting complete."
