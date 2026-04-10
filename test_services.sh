@@ -25,23 +25,8 @@ if [ -f "PhotoTest.JPG" ]; then
   else
     # Encode image to base64
     BASE64_IMAGE=$(base64 -w 0 "PhotoTest.JPG")
-    # Construct JSON payload
-    JSON_PAYLOAD=$(cat <<EOF
-{
-  "model": "$MODEL_ID",
-  "messages": [
-    {
-      "role": "user",
-      "content": [
-        {"type": "text", "text": "Describe this image in a short sentence."},
-        {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,$BASE64_IMAGE"}}
-      ]
-    }
-  ],
-  "max_tokens": 100
-}
-EOF
-)
+    # Create JSON payload using printf to avoid argument list issues
+    printf -v JSON_PAYLOAD '{"model":"%s","messages":[{"role":"user","content":[{"type":"text","text":"Describe this image in a short sentence."},{"type":"image_url","image_url":{"url":"data:image/jpeg;base64,%s"}}]}],"max_tokens":100}' "$MODEL_ID" "$BASE64_IMAGE"
     # Send request to vision endpoint
     curl -s -X POST http://localhost:8002/v1/chat/completions \
       -H "Content-Type: application/json" \
