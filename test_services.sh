@@ -25,12 +25,32 @@ if [ -f "PhotoTest.JPG" ]; then
   else
     # Encode image to base64
     BASE64_IMAGE=$(base64 -w 0 "PhotoTest.JPG")
-    # Create JSON payload using printf to avoid argument list issues
-    printf -v JSON_PAYLOAD '{"model":"%s","messages":[{"role":"user","content":[{"type":"text","text":"Describe this image in a short sentence."},{"type":"image_url","image_url":{"url":"data:image/jpeg;base64,%s"}}]}],"max_tokens":100}' "$MODEL_ID" "$BASE64_IMAGE"
-    # Send request to vision endpoint
-    curl -s -X POST http://localhost:8002/v1/chat/completions \
+    # Create JSON payload and send via stdin to avoid argument list issues
+    {
+      echo '{'
+      echo '  "model": "'"$MODEL_ID"'",'
+      echo '  "messages": ['
+      echo '    {'
+      echo '      "role": "user",'
+      echo '      "content": ['
+      echo '        {'
+      echo '          "type": "text",'
+      echo '          "text": "Describe this image in a short sentence."'
+      echo '        },'
+      echo '        {'
+      echo '          "type": "image_url",'
+      echo '          "image_url": {'
+      echo '            "url": "data:image/jpeg;base64,'"$BASE64_IMAGE"'"'
+      echo '          }'
+      echo '        }'
+      echo '      ]'
+      echo '    }'
+      echo '  ],'
+      echo '  "max_tokens": 100'
+      echo '}'
+    } | curl -s -X POST http://localhost:8002/v1/chat/completions \
       -H "Content-Type: application/json" \
-      -d "$JSON_PAYLOAD" | jq '.choices[0].message.content'
+      -d @- | jq '.choices[0].message.content'
   fi
 else
   echo "PhotoTest.JPG file not found, skipping vision test"
