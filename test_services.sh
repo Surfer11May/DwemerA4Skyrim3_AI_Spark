@@ -36,6 +36,7 @@ if [ -f "PhotoTest.JPG" ]; then
     # Encode image to base64
     BASE64_IMAGE=$(base64 -w 0 "PhotoTest.JPG")
     # Create JSON payload and send via stdin to avoid argument list issues
+    start_time=$(date +%s.%N)
     {
       echo '{'
       echo '  "model": "'"$MODEL_ID"'",'
@@ -58,8 +59,7 @@ if [ -f "PhotoTest.JPG" ]; then
       echo '  ],'
       echo '  "max_tokens": 100'
       echo '}'
-    } | start_time=$(date +%s.%N)
-    response=$(curl -s -X POST http://localhost:8002/v1/chat/completions \
+    } | response=$(curl -s -X POST http://localhost:8002/v1/chat/completions \
       -H "Content-Type: application/json" \
       -d @-)
     end_time=$(date +%s.%N)
