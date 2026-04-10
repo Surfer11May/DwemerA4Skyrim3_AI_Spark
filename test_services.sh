@@ -56,9 +56,11 @@ else
   echo "PhotoTest.JPG file not found, skipping vision test"
 fi
 
-# Test llm-diary (port 8003) - just check if it's responding
-echo -e "\nTesting llm-diary (port 8003) health endpoint:"
-curl -s http://localhost:8003/v1/models | jq '.data[0].id'
+# Test llm-diary (port 8003) - test with a prompt
+echo -e "\nTesting llm-diary (port 8003) with diary prompt:"
+curl -s -X POST http://localhost:8003/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model": "nvidia/Llama-3.1-8B-Instruct-NVFP4", "prompt": "Today I felt", "max_tokens": 20}' | jq '.choices[0].text'
 
 # Test stt-whisper (port 8004) - check if port is open
 echo -e "\nTesting stt-whisper (port 8004) connectivity:"
