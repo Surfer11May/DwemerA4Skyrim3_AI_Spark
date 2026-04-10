@@ -17,14 +17,14 @@ curl -s -X POST http://localhost:8001/v1/completions \
 
 # Test llm-vision (port 8002) - describe an image
 echo -e "\nTesting llm-vision (port 8002) image description:"
-if [ -f "Phototest" ]; then
+if [ -f "PhotoTest.JPG" ]; then
   # Get the first available model
   MODEL_ID=$(curl -s http://localhost:8002/v1/models | jq -r '.data[0].id')
   if [ -z "$MODEL_ID" ] || [ "$MODEL_ID" = "null" ]; then
     echo "Failed to get model ID from llm-vision"
   else
     # Encode image to base64
-    BASE64_IMAGE=$(base64 -w 0 "Phototest")
+    BASE64_IMAGE=$(base64 -w 0 "PhotoTest.JPG")
     # Construct JSON payload
     JSON_PAYLOAD=$(cat <<EOF
 {
@@ -48,7 +48,7 @@ EOF
       -d "$JSON_PAYLOAD" | jq '.choices[0].message.content'
   fi
 else
-  echo "Phototest file not found, skipping vision test"
+  echo "PhotoTest.JPG file not found, skipping vision test"
 fi
 
 # Test llm-diary (port 8003) - just check if it's responding
