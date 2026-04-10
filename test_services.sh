@@ -65,11 +65,21 @@ if [ -f "PhotoTest.JPG" ]; then
     end_time=$(date +%s.%N)
     elapsed=$(echo "$end_time - $start_time" | bc)
     
-    # Extract and format the response properly
-    content=$(echo "$response" | jq -r '.choices[0].message.content // empty')
+    # Handle both chat and completion response formats
+    content=$(echo "$response" | jq -r '.choices[0].message.content // .choices[0].text // empty')
     if [ -z "$content" ]; then
-      # Fallback to raw response if content is empty
-      echo "$response" | jq '.'
+      # Fallback to showing the raw response structure for debugging
+      echo "Unexpected response format:"
+      echo "$response" | jq '{
+        id: .id,
+        object: .object,
+        model: .model,
+        choices: [.choices[] | {
+          index: .index,
+          message: .message // .text,
+          finish_reason: .finish_reason
+        }]
+      }'
     else
       echo "$content"
     fi
