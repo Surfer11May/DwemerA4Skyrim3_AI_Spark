@@ -5,15 +5,25 @@ echo "===================================="
 
 # Test llm-standard (port 8000)
 echo -e "\nTesting llm-standard (port 8000):"
-curl -s -X POST http://localhost:8000/v1/completions \
+START_TIME=$(date +%s%3N)
+RESPONSE=$(curl -s -X POST http://localhost:8000/v1/completions \
   -H "Content-Type: application/json" \
-  -d '{"model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4", "prompt": "Skyrim is", "max_tokens": 20}' | jq '.choices[0].text'
+  -d '{"model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4", "prompt": "Skyrim is", "max_tokens": 20}')
+END_TIME=$(date +%s%3N)
+RESPONSE_TIME=$((END_TIME - START_TIME))
+echo "Response time: ${RESPONSE_TIME}ms"
+echo "$RESPONSE" | jq '.choices[0].text'
 
 # Test llm-fast (port 8001)
 echo -e "\nTesting llm-fast (port 8001):"
-curl -s -X POST http://localhost:8001/v1/completions \
+START_TIME=$(date +%s%3N)
+RESPONSE=$(curl -s -X POST http://localhost:8001/v1/completions \
   -H "Content-Type: application/json" \
-  -d '{"model": "nvidia/nemotron-nano-9b-v2", "prompt": "The Dragonborn", "max_tokens": 20}' | jq '.choices[0].text'
+  -d '{"model": "nvidia/nemotron-nano-9b-v2", "prompt": "The Dragonborn", "max_tokens": 20}')
+END_TIME=$(date +%s%3N)
+RESPONSE_TIME=$((END_TIME - START_TIME))
+echo "Response time: ${RESPONSE_TIME}ms"
+echo "$RESPONSE" | jq '.choices[0].text'
 
 # Test llm-vision (port 8002) - describe an image
 # echo -e "\nTesting llm-vision (port 8002) image description:"
@@ -58,9 +68,14 @@ curl -s -X POST http://localhost:8001/v1/completions \
 
 # Test llm-diary (port 8003) - test with a prompt
 echo -e "\nTesting llm-diary (port 8003) with diary prompt:"
-curl -s -X POST http://localhost:8003/v1/completions \
+START_TIME=$(date +%s%3N)
+RESPONSE=$(curl -s -X POST http://localhost:8003/v1/completions \
   -H "Content-Type: application/json" \
-  -d '{"model": "nvidia/Llama-3.1-8B-Instruct-NVFP4", "prompt": "Today I felt", "max_tokens": 20}' | jq '.choices[0].text'
+  -d '{"model": "nvidia/Llama-3.1-8B-Instruct-NVFP4", "prompt": "Today I felt", "max_tokens": 20}')
+END_TIME=$(date +%s%3N)
+RESPONSE_TIME=$((END_TIME - START_TIME))
+echo "Response time: ${RESPONSE_TIME}ms"
+echo "$RESPONSE" | jq '.choices[0].text'
 
 # Test stt-whisper (port 8004) - check if port is open
 echo -e "\nTesting stt-whisper (port 8004) connectivity:"
