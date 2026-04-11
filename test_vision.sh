@@ -36,9 +36,16 @@ if [ -f "PhotoTest.JPG" ]; then
       echo '  ],'
       echo '  "max_tokens": 100'
       echo '}'
-    } | curl -s -w "\nVision response time: %{time_total}ms\n" -X POST http://localhost:8002/v1/chat/completions \
-      -H "Content-Type: application/json" \
-      -d @- | jq '.choices[0].message.content'
+    } | {
+      # Use a subshell to capture both the response and timing
+      RESPONSE=$(curl -s -w "%{time_total}" -X POST http://localhost:8002/v1/chat/completions \
+        -H "Content-Type: application/json" \
+        -d @-)
+      RESPONSE_TIME=$(echo "$RESPONSE" | tail -n1)
+      JSON_RESPONSE=$(echo "$RESPONSE" | head -n -1)
+      echo "Vision response time: ${RESPONSE_TIME}s"
+      echo "$JSON_RESPONSE" | jq '.choices[0].message.content'
+    }
   fi
 else
   echo "PhotoTest.JPG file not found, skipping vision test"
