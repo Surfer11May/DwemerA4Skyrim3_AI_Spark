@@ -38,13 +38,18 @@ if [ -f "PhotoTest.JPG" ]; then
       echo '}'
     } | {
       # Use a subshell to capture both the response and timing
-      RESPONSE=$(curl -s -w "%{time_total}" -X POST http://localhost:8002/v1/chat/completions \
+      RESPONSE=$(curl -s -D - -w "%{time_total}" -o /dev/null -X POST http://localhost:8002/v1/chat/completions \
+        -H "Content-Type: application/json" \
+        -d @- 2>/dev/null)
+      # Actually, let's do this properly - capture response and time separately
+      START_TIME=$(date +%s%3N)
+      RESPONSE=$(curl -s -X POST http://localhost:8002/v1/chat/completions \
         -H "Content-Type: application/json" \
         -d @-)
-      RESPONSE_TIME=$(echo "$RESPONSE" | tail -n1)
-      JSON_RESPONSE=$(echo "$RESPONSE" | head -n -1)
-      echo "Vision response time: ${RESPONSE_TIME}s"
-      echo "$JSON_RESPONSE" | jq '.choices[0].message.content'
+      END_TIME=$(date +%s%3N)
+      RESPONSE_TIME=$((END_TIME - START_TIME))
+      echo "Vision response time: ${RESPONSE_TIME}ms"
+      echo "$RESPONSE" | jq '.choices[0].message.content'
     }
   fi
 else
