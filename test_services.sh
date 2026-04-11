@@ -26,7 +26,6 @@ if [ -f "PhotoTest.JPG" ]; then
     # Encode image to base64
     BASE64_IMAGE=$(base64 -w 0 "PhotoTest.JPG")
     # Create JSON payload and send via stdin to avoid argument list issues
-    start_time=$(date +%s.%N)
     {
       echo '{'
       echo '  "model": "'"$MODEL_ID"'",'
@@ -49,21 +48,9 @@ if [ -f "PhotoTest.JPG" ]; then
       echo '  ],'
       echo '  "max_tokens": 100'
       echo '}'
-    } | response=$(curl -s -X POST http://localhost:8002/v1/chat/completions \
+    } | curl -s -X POST http://localhost:8002/v1/chat/completions \
       -H "Content-Type: application/json" \
-      -d @-)
-    end_time=$(date +%s.%N)
-    elapsed=$(echo "$end_time - $start_time" | bc)
-    
-    # Extract and format the response properly
-    content=$(echo "$response" | jq -r '.choices[0].message.content // empty')
-    if [ -z "$content" ]; then
-      # Fallback to raw response if content is empty
-      echo "$response" | jq '.'
-    else
-      echo "$content"
-    fi
-    echo "Response time: $(printf "%.2f" $elapsed)s"
+      -d @- | jq '.choices[0].message.content'
   fi
 else
   echo "PhotoTest.JPG file not found, skipping vision test"
