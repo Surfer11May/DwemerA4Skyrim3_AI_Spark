@@ -24,10 +24,11 @@ services:
       --host 0.0.0.0
       --port 8000
       --trust-remote-code
-      --max-model-len 4096
-      --gpu-memory-utilization 0.22
+      --max-model-len 8192
+      --gpu-memory-utilization 0.40
       --disable-log-requests
       --swap-space 4
+      --max-num-seqs 16
     deploy:
       resources:
         reservations:
@@ -41,27 +42,6 @@ services:
       retries: 60
       start_period: 900s
       
-  llm-fast:
-    profiles: [Skyrim-Full-Stack]
-    image: nvcr.io/nim/nvidia/nvidia-nemotron-nano-9b-v2-dgx-spark:1.0.0-variant
-    ports: ["8001:8000"]
-    environment:
-      - NGC_API_KEY=${NGC_API_KEY}
-      - NIM_GPU_MEM_FRACTION=0.15
-      - NIM_MAX_MODEL_LEN=4096
-    volumes: ["nim-cache:/opt/nim/.cache"]
-    deploy:
-      resources:
-        reservations:
-          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
-    depends_on:
-      llm-standard: {condition: service_healthy}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 600s
       
   llm-vision:
     profiles: [Skyrim-Full-Stack]
@@ -81,7 +61,7 @@ services:
         reservations:
           devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
     depends_on:
-      llm-fast: {condition: service_healthy}
+      llm-standard: {condition: service_healthy}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
       interval: 30s
