@@ -16,7 +16,7 @@ services:
       - HF_TOKEN=${HF_TOKEN}
       - HF_HOME=/opt/nim/.cache
       - PYTHONUNBUFFERED=1
-      - NIM_MAX_MODEL_LEN=4096
+      - NIM_MAX_MODEL_LEN=8192
     volumes:
       - "nim-cache:/opt/nim/.cache"
     command: >
@@ -25,7 +25,7 @@ services:
       --port 8000
       --trust-remote-code
       --max-model-len 8192
-      --gpu-memory-utilization 0.40
+      --gpu-memory-utilization 0.35
       --disable-log-requests
       --swap-space 4
       --max-num-seqs 16
@@ -41,7 +41,6 @@ services:
       timeout: 20s
       retries: 60
       start_period: 900s
-      
       
   llm-vision:
     profiles: [Skyrim-Full-Stack]
@@ -73,7 +72,7 @@ services:
     profiles: [Skyrim-Full-Stack]
     image: nvcr.io/nvidia/vllm:26.01-py3
     shm_size: '16gb'
-    ports: ["8003:8000"]
+    ports: ["8005:8000"]  # Changed host port to 8005 to clear 8003 for MiniMe
     environment:
       - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
       - NIM_MAX_MODEL_LEN=4096
@@ -82,46 +81,40 @@ services:
         reservations:
           devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
     command: >
-      vllm serve "nvidia/Llama-3.1-8B-Instruct-NVFP4"
-      --host 0.0.0.0 --port 8000 --trust-remote-code
-      --max-model-len 4096 --gpu-memory-utilization 0.12
+      vllm serve "nvidia/Llama-3.1-8B-Instruct-NVFP4" --host 0.0.0.0 --port 8000 --trust-remote-code --max-model-len 4096 --gpu-memory-utilization 0.12
     depends_on:
       llm-vision: {condition: service_healthy}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-      interval: 30s    # Check every 30 seconds
-      timeout: 30s     # Give the curl 30s to respond (DPO can hang the API briefly)
-      retries: 15      # Increased from 5 to 15 (gives it ~7-8 minutes total to stabilize)
-      start_period: 500s # 5-minute grace period before healthchecks even start counting
+      interval: 30s
+      timeout: 30s
+      retries: 15
+      start_period: 500s
 
-  # --- SENSORY STACK (The Ears, Voice, and Judgment) ---
   stt-whisper:
-    profiles: [Skyrim-Full-Stack]
-    image: ghcr.io/linuxserver/faster-whisper:arm64v8-latest
-    container_name: agentic-rag-stt-whisper-1
+    image: ghcr.io/linuxserver/faster-whisper:arm64v8-latest # Matches GX10 ARM64
     environment:
-      - WHISPER_MODEL=Numbat/faster-skyrim-whisper-base.en
-      - WHISPER_LANG=en
-      - PUID=911
-      - PGID=911
-      - TZ=America/Chicago
+      - WHISPER_MODEL=Numbat/faster-skyrim-whisper-base.en # Fixed typo & specified Numbat
+      - WHISPER_COMPUTE_TYPE=float16                     # Optimized for Blackwell CUDA
+      - WHISPER_LANG=en                                   # Prevents auto-detect latency
     volumes:
-      - /home/surfer11may/dwemer/remote-faster-whisper/models:/app/models
-    ports: ["8004:10300"]
+      - /home/surfer11may/dwemer/remote-faster-whisper/models:/config/models # Persistent storage
     deploy:
       resources:
         reservations:
-          devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
     depends_on:
       llm-diary: {condition: service_healthy}
     healthcheck:
-      # FIX: Use /dev/tcp to verify the port is alive without needing HTTP/curl
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/10300'"]
       interval: 30s
       timeout: 10s
       retries: 15
-      start_period: 300s # Gives the GB10 5 mins to load Numbat weights
-      
+      start_period: 300s
+
   tts-xtts:
     profiles: [Skyrim-Full-Stack]
     image: rajeshjsl3/xtts-api-server:working.29.10.2024
@@ -139,31 +132,28 @@ services:
     depends_on:
       stt-whisper: {condition: service_healthy}
     healthcheck:
-      # XTTS usually has a /docs or / endpoint, but TCP is safer for cross-stack sync
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8020'"]
       interval: 20s
       timeout: 10s
       retries: 5
       start_period: 300s
-      
+
   minime-t5:
     profiles: [Skyrim-Full-Stack]
     build:
-      context: /home/surfer11may/dwemer/minime-t5         
+      context: /home/surfer11may/dwemer/minime-t5
       dockerfile: Dockerfile
     image: dwemer/minime-t5:arm64
     container_name: agentic-rag-minime-t5-1
-    ports: ["8082:8003"]
+    ports: ["8003:8003"] # Now uses 8003 cleanly since Diary moved to 8005
     volumes:
       - /home/surfer11may/dwemer/minime-t5:/app/models
     environment:
-      - CUDA_VISIBLE_DEVICES=
+      - CUDA_VISIBLE_DEVICES=0
     deploy:
       resources:
         reservations:
           devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
-        limits:
-          memory: 2G       
     depends_on:
       tts-xtts: {condition: service_healthy}
     healthcheck:
