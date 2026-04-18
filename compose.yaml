@@ -92,6 +92,7 @@ services:
       start_period: 500s
 
   stt-whisper:
+    profiles: [Skyrim-Full-Stack]
     image: ghcr.io/linuxserver/faster-whisper:arm64v8-latest # Matches GX10 ARM64
     environment:
       - WHISPER_MODEL=Numbat/faster-skyrim-whisper-base.en # Fixed typo & specified Numbat
