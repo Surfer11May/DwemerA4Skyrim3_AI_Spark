@@ -33,6 +33,8 @@ services:
       resources:
         reservations:
           devices: [{driver: nvidia, device_ids: ['0'], capabilities: [gpu]}]
+      restart_policy:
+        condition: on-failure
     depends_on:
       init-chmod: {condition: service_completed_successfully}
     healthcheck:
@@ -93,13 +95,17 @@ services:
 
   stt-whisper:
     profiles: [Skyrim-Full-Stack]
-    image: ghcr.io/linuxserver/faster-whisper:arm64v8-latest # Matches GX10 ARM64
+    image: ghcr.io/linuxserver/faster-whisper:arm64v8-latest
     environment:
-      - WHISPER_MODEL=Numbat/faster-skyrim-whisper-base.en # Fixed typo & specified Numbat
-      - WHISPER_COMPUTE_TYPE=float16                     # Optimized for Blackwell CUDA
-      - WHISPER_LANG=en                                   # Prevents auto-detect latency
+      - WHISPER_MODEL=Numbat/faster-skyrim-whisper-base.en
+      - WHISPER_COMPUTE_TYPE=float16 
+      - WHISPER_LANG=en
+      - HF_TOKEN=${HF_TOKEN}  # Prevents the "Unauthenticated" warning
+      - LD_LIBRARY_PATH=/usr/local/cuda/lib64  # Forces the container to find the GPU libs
     volumes:
-      - /home/surfer11may/dwemer/remote-faster-whisper/models:/config/models # Persistent storage
+      - /home/surfer11may/dwemer/remote-faster-whisper/models:/config/models
+    ports:
+      - "10300:10300"
     deploy:
       resources:
         reservations:
@@ -107,10 +113,14 @@ services:
             - driver: nvidia
               device_ids: ['0']
               capabilities: [gpu]
+      restart_policy:
+        condition: on-failure
     depends_on:
-      llm-diary: {condition: service_healthy}
+      llm-diary:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/10300'"]
+      # Using 'nc' (netcat) is the most reliable way to check the socket status
+      test: ["CMD-SHELL", "nc -z localhost 10300 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 15
